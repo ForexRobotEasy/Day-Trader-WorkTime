@@ -1,0 +1,94 @@
+
+//+------------------------------------------------------------------+
+//|                                                     Day Trader WorkTime |
+//|                                                forexroboteasy.com |
+//|                                                   Forex Robot Easy Team |
+//|                                                                   |
+//|                                                      Terms of Reference |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                                Day Trader WorkTime Indicator Code |
+//+------------------------------------------------------------------+
+
+// Define the input parameters for the indicator
+input int AsianSessionStartHour = 22; // Start hour of the Asian session
+input int AsianSessionStartMinute = 0; // Start minute of the Asian session
+input int AsianSessionEndHour = 6; // End hour of the Asian session
+input int AsianSessionEndMinute = 0; // End minute of the Asian session
+input color AsianSessionBoxColor = clrDodgerBlue; // Color of the Asian session box
+input int MaxAsianSessionRangeInPips = 50; // Maximum range of the Asian session in pips
+
+// Define the variables for the indicator
+datetime AsianSessionStart; // Start time of the Asian session
+datetime AsianSessionEnd; // End time of the Asian session
+bool AsianSessionRangeExceeded; // Flag to indicate if the Asian session range is exceeded
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Calculate the Asian session start and end times based on the input parameters
+    AsianSessionStart = StrToTime(
+        TimeToStr(TimeCurrent(), TIME_DATE) + ' ' +
+        IntegerToString(AsianSessionStartHour, 10) + ':' +
+        IntegerToString(AsianSessionStartMinute, 10)
+    );
+    AsianSessionEnd = StrToTime(
+        TimeToStr(TimeCurrent(), TIME_DATE) + ' ' +
+        IntegerToString(AsianSessionEndHour, 10) + ':' +
+        IntegerToString(AsianSessionEndMinute, 10)
+    );
+    
+    // Return INIT_SUCCEEDED to indicate successful initialization
+    return INIT_SUCCEEDED;
+}
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void OnCalculate(const int rates_total,
+                 const int prev_calculated,
+                 const datetime& time[],
+                 const double& open[],
+                 const double& high[],
+                 const double& low[],
+                 const double& close[],
+                 const long& tick_volume[],
+                 const long& volume[],
+                 const int& spread[])
+{
+    // Calculate the range of the Asian session in pips
+    double AsianSessionRange = (high[0] - low[0]) / Point;
+    
+    // Check if the Asian session range exceeds the maximum range
+    if (AsianSessionRange > MaxAsianSessionRangeInPips)
+    {
+        AsianSessionRangeExceeded = true;
+    }
+    else
+    {
+        AsianSessionRangeExceeded = false;
+    }
+    
+    // Draw the Asian session box on the chart
+    if (AsianSessionRangeExceeded)
+    {
+        ObjectCreate(0, 'AsianSessionBox', OBJ_RECTANGLE_LABEL, 0, AsianSessionStart, low[0], AsianSessionEnd, high[0]);
+        ObjectSetInteger(0, 'AsianSessionBox', OBJPROP_COLOR, AsianSessionBoxColor);
+    }
+    else
+    {
+        ObjectDelete(0, 'AsianSessionBox');
+    }
+}
+
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Remove the Asian session box from the chart
+    ObjectDelete(0, 'AsianSessionBox');
+}
